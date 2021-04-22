@@ -798,3 +798,18 @@ def test_default_dimensions_across_instances(namespace):
 
     # THEN default dimensions should also be present
     assert "environment" in same_metrics.default_dimensions
+
+
+def test_default_dimensions_in_decorator(capsys, namespace):
+    # GIVEN Metrics is initialized
+    my_metrics = Metrics(service=service, namespace=namespace)
+
+    # WHEN log_metrics is used to serialize metrics
+    @my_metrics.log_metrics(default_dimensions={"environment": "dev"})
+    def lambda_handler(evt, context):
+        return True
+
+    lambda_handler({}, {})
+
+    # THEN default dimensions should also be present
+    assert "environment" in my_metrics.default_dimensions

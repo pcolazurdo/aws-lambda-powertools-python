@@ -128,6 +128,7 @@ class Metrics(MetricManager):
         lambda_handler: Callable[[Any, Any], Any] = None,
         capture_cold_start_metric: bool = False,
         raise_on_empty_metrics: bool = False,
+        default_dimensions: Any = None,
     ):
         """Decorator to serialize and publish metrics at the end of a function execution.
 
@@ -164,6 +165,10 @@ class Metrics(MetricManager):
 
         # If handler is None we've been called with parameters
         # Return a partial function with args filled
+        if isinstance(default_dimensions, dict):
+            logger.debug("Decorator called default_dimensions set")
+            self.set_default_dimensions(**default_dimensions)
+
         if lambda_handler is None:
             logger.debug("Decorator called with parameters")
             return functools.partial(
