@@ -26,6 +26,7 @@ boto3 = "^1.12"
 jmespath = "^0.10.0"
 pydantic = {version = "^1.8.1", optional = true }
 email-validator = {version = "*", optional = true }
+pytest-mypy = "^0.8.1"
 
 [tool.poetry.dev-dependencies]
 coverage = {extras = ["toml"], version = "^5.5"}
