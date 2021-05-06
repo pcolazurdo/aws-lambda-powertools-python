@@ -35,7 +35,7 @@ def test_alb_event():
     def foo():
         assert isinstance(app.current_event, ALBEvent)
         assert app.lambda_context == {}
-        return 200, TEXT_HTML, "foo"
+        return Response(200, TEXT_HTML, "foo")
 
     # WHEN calling the event handler
     result = app(load_event("albEvent.json"), {})
@@ -182,6 +182,10 @@ def test_cors():
     def with_cors() -> Response:
         return Response(200, TEXT_HTML, "test")
 
+    @app.get("/without-cors")
+    def without_cors() -> Response:
+        return Response(200, TEXT_HTML, "test")
+
     def handler(event, context):
         return app.resolve(event, context)
 
@@ -195,6 +199,11 @@ def test_cors():
     assert headers["Access-Control-Allow-Origin"] == "*"
     assert "Access-Control-Allow-Credentials" not in headers
     assert headers["Access-Control-Allow-Headers"] == ",".join(sorted(CORSConfig._REQUIRED_HEADERS))
+
+    # THEN for routes without cors flag return no cors headers
+    mock_event = {"path": "/my/request", "httpMethod": "GET"}
+    result = handler(mock_event, None)
+    assert "Access-Control-Allow-Origin" not in result["headers"]
 
 
 def test_compress():
@@ -359,18 +368,18 @@ def test_custom_cors_config():
     app = ApiGatewayResolver(cors=cors_config)
     event = {"path": "/cors", "httpMethod": "GET"}
 
-    @app.get("/cors", cors=True)
+    @app.get("/cors")
     def get_with_cors():
         return {}
 
-    @app.get("/another-one")
+    @app.get("/another-one", cors=False)
     def another_one():
         return {}
 
     # WHEN calling the event handler
     result = app(event, None)
 
-    # THEN return the custom cors headers
+    # THEN routes by default return the custom cors headers
     assert "headers" in result
     headers = result["headers"]
     assert headers["Content-Type"] == APPLICATION_JSON
@@ -385,6 +394,7 @@ def test_custom_cors_config():
     # AND custom cors was set on the app
     assert isinstance(app._cors, CORSConfig)
     assert app._cors is cors_config
+
     # AND routes without cors don't include "Access-Control" headers
     event = {"path": "/another-one", "httpMethod": "GET"}
     result = app(event, None)
@@ -426,15 +436,15 @@ def test_cors_preflight():
     # AND cors is enabled
     app = ApiGatewayResolver(cors=CORSConfig())
 
-    @app.get("/foo", cors=True)
+    @app.get("/foo")
     def foo_cors():
         ...
 
-    @app.route(method="delete", rule="/foo", cors=True)
+    @app.route(method="delete", rule="/foo")
     def foo_delete_cors():
         ...
 
-    @app.post("/foo")
+    @app.post("/foo", cors=False)
     def post_no_cors():
         ...
 
