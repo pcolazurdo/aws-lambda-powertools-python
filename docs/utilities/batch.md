@@ -102,7 +102,7 @@ All records in the batch will be passed to this handler for processing, even if 
 * **Any unprocessed messages detected**, we will raise `SQSBatchProcessingError` to ensure failed messages return to your SQS queue
 
 !!! warning
-    You will not have accessed to the **processed messages** within the Lambda Handler.
+    You _must not_ access the **processed messages** within the Lambda Handler.
 
 	All processing logic will and should be performed by the `record_handler` function.
 
@@ -110,9 +110,9 @@ All records in the batch will be passed to this handler for processing, even if 
 
 ### Choosing between decorator and context manager
 
-They have nearly the same behaviour when it comes to processing messages from the batch:
+Both have nearly the same behaviour when it comes to processing messages from the batch:
 
-* **Entire batch has been successfully processed**, where your Lambda handler returned successfully, we will let SQS delete the batch to optimize your cost
+* **Entire batch has been successfully processed**, where your Lambda handler returned successfully, we will let Lambda delete the batch to optimize your cost
 * **Entire Batch has been partially processed successfully**, where exceptions were raised within your `record handler`, we will:
     - **1)** Delete successfully processed messages from the queue by directly calling `sqs:DeleteMessageBatch`
     - **2)** Raise `SQSBatchProcessingError` to ensure failed messages return to your SQS queue
